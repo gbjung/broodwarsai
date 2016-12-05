@@ -21,17 +21,15 @@ public class ProtossVsProtoss implements BWAPIEventListener {
     /** reference to JNI-BWAPI */
     private final JNIBWAPI bwapi;
 
-    /** used for mineral splits */
-    private final HashSet<Unit> claimedMinerals = new HashSet<>();
-
-    /** Spawn the Pylon at 8 supply */
-    private boolean firstPylon;
-
     /** the probe that'll warp stuff in */
     private Unit warperProbe;
 
-    /** Keep track of supply cap */
-    private int supplyCap;
+    /** Milestone booleans */
+    private boolean firstPylon, firstGateway, firstZealot,
+            firstAssimilator, secondPylon, cyberCore, firstDragoon;
+
+    /** Number of probes at the first Assimilator */
+    private int gasProbes;
 
     /**
      * Create a Java AI.
@@ -68,10 +66,16 @@ public class ProtossVsProtoss implements BWAPIEventListener {
         bwapi.setGameSpeed(0);
 
         // reset agent state
-        claimedMinerals.clear();
-        firstPylon = false;
         warperProbe = null;
-        supplyCap = 0;
+        firstPylon = false;
+        firstGateway = false;
+        firstZealot = false;
+        firstAssimilator = false;
+        secondPylon = false;
+        cyberCore = false;
+        firstDragoon = false;
+        gasProbes = 0;
+
     }
 
     /**
@@ -116,42 +120,117 @@ public class ProtossVsProtoss implements BWAPIEventListener {
         // spawn probes
         for (Unit unit : bwapi.getMyUnits()) {
             if (unit.getType() == UnitTypes.Protoss_Nexus) {
-                if (bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getSupplyTotal() < 8) {
+                //Train probes until 8 supply
+                if (bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getSupplyUsed() < 16) {
+                    unit.train(UnitTypes.Protoss_Probe);
+                }
+                //Train probes until 10 supply once the firstPylon is started
+                if (bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getSupplyUsed() < 20 && firstPylon == true) {
+                    unit.train(UnitTypes.Protoss_Probe);
+                }
+                //Train probes until 13 supply once the Gateway is started
+                if (bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getSupplyUsed() < 26 && firstGateway == true) {
+                    unit.train(UnitTypes.Protoss_Probe);
+                }
+                //Trains another probe after training first Zealot to hit 16 supply
+                if (bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getSupplyUsed() < 34 && firstZealot == true){
                     unit.train(UnitTypes.Protoss_Probe);
                 }
             }
-        }
+            //if the Assimilator is built, assign probes to mine gas until there are three probes getting gas
+            if (unit.getType() == UnitTypes.Protoss_Probe && firstAssimilator == true && gasProbes < 3 && unit != warperProbe){
+                for (Unit gas : bwapi.getNeutralUnits()) {
+                    if (gas.getType().isRefinery()) {
+                        double distance = unit.getDistance(gas);
 
-        for (Unit unit : bwapi.getMyUnits()){
-            if (bwapi.getSelf().getSupplyTotal() == 8) {
-                warperProbe = unit;
+                        if (distance < 300) {
+                            unit.rightClick(gas, false);
+                            gasProbes++;
+                            break;
+                        }
+                    }
+                }
+
+
+            }
+            if (unit.getType() == UnitTypes.Protoss_Gateway){
+                //at 13 supply, train a zealot
+                if (bwapi.getSelf().getSupplyUsed() == 26) {
+                    if(bwapi.getSelf().getMinerals() >= 100 && firstGateway == true){
+                        if (unit.getType() == UnitTypes.Protoss_Gateway){
+                            unit.train(UnitTypes.Protoss_Zealot);
+                            firstZealot = true;
+                        }
+                    }
+                }
+                //after the cybernetics core, build the first dragoon
+                if (cyberCore == true && firstDragoon == false && bwapi.getSelf().getMinerals() >= 125
+                        && bwapi.getSelf().getGas() >= 50){
+                    unit.train(UnitTypes.Protoss_Dragoon);
+                    firstDragoon = true;
+
+                }
+
             }
         }
 
-        // collect minerals
+        //At 8 supply, assign the last spawned probe as the warper probe and have it build a pylon if minerals are sufficient
+        if (bwapi.getSelf().getSupplyUsed() == 16) {
+            for (Unit unit :  bwapi.getMyUnits()){
+                if (unit.getType() == UnitTypes.Protoss_Probe){
+                    if(unit.isIdle() && warperProbe == null){
+                        warperProbe = unit;
+                    }
+                    if(bwapi.getSelf().getMinerals() >= 100){
+                        warperProbe.build(); //BUILD PYLON
+                        firstPylon = true;
+                    }
+                }
+            }
+        }
+        //At 10 supply, have the warper probe build a gateway if enough minerals
+        if (bwapi.getSelf().getSupplyUsed() == 20) {
+            if(bwapi.getSelf().getMinerals() >= 150){
+                warperProbe.build(); //BUILD GATEWAY
+                firstGateway = true;
+            }
+        }
+        //at 12 supply, have the warper probe build an assimilator
+        if (bwapi.getSelf().getSupplyUsed() == 24) {
+            if(bwapi.getSelf().getMinerals() >= 100){
+                warperProbe.build(); //BUILD ASSIMILATOR
+                firstAssimilator = true;
+            }
+        }
+        //at 16 supply, build a pylon
+        if (bwapi.getSelf().getSupplyUsed() == 32) {
+            if(bwapi.getSelf().getMinerals() >= 100){
+                warperProbe.build(); //BUILD SECOND PYLON
+                secondPylon = true;
+            }
+        }
+        //at 17 supply after our second pylon build a Cybernetics Core
+        if (secondPylon == true && bwapi.getSelf().getMinerals() >= 100 && cyberCore == false) {
+            warperProbe.build(); //BUILD CYBERNETICS CORE
+            cyberCore = true;
+        }
+
+        //have all idle probes mine minerals
         for (Unit unit : bwapi.getMyUnits()) {
             if (unit.getType() == UnitTypes.Protoss_Probe) {
-                // You can use referential equality for units, too
-                if (unit.isIdle() && unit != warperProbe) {
+                if (unit.isIdle()) {
                     for (Unit minerals : bwapi.getNeutralUnits()) {
-                        if (minerals.getType().isMineralField()
-                                && !claimedMinerals.contains(minerals)) {
+                        if (minerals.getType().isMineralField()) {
                             double distance = unit.getDistance(minerals);
 
                             if (distance < 300) {
                                 unit.rightClick(minerals, false);
-                                claimedMinerals.add(minerals);
                                 break;
                             }
                         }
                     }
                 }
             }
-                //if (unit == warperProbe){
-                //    if(bwapi.getSelf().getMinerals() >= 100 && firstPylon == false){
-
-                  //  }
-                //}
         }
 
 
