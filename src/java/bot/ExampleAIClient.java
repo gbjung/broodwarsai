@@ -295,17 +295,17 @@ public class ExampleAIClient implements BWAPIEventListener {
 					accurate_supply ++;
 				}
 				//Train probes until 10 supply once the firstPylon is started
-				if (bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getSupplyUsed() < 10 && firstPylon == true) {
+				if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 10 && firstPylon == true) {
 					unit.train(UnitType.UnitTypes.Protoss_Probe);
 					accurate_supply ++;
 				}
 				//Train probes until 13 supply once the Gateway is started
-				if (bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getSupplyUsed() < 13 && firstGateway == true) {
+				if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 13 && firstGateway == true) {
 					unit.train(UnitType.UnitTypes.Protoss_Probe);
 					accurate_supply ++;
 				}
 				//Trains another probe after training first Zealot to hit 16 supply
-				if (bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getSupplyUsed() < 16 && firstZealot == true) {
+				if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 16 && firstZealot == true) {
 					unit.train(UnitType.UnitTypes.Protoss_Probe);
 					accurate_supply ++;
 				}
@@ -327,7 +327,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 
 			}
 		}
-		if(accurate_supply==12 && x.getMinerals()>100){
+		if(accurate_supply==12 && x.getMinerals()>100 && !firstAssimilator){
 			mainbuild(UnitType.UnitTypes.Protoss_Assimilator);
 			firstAssimilator=true;
 		}
