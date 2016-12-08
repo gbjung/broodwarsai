@@ -19,6 +19,14 @@ public class ExampleAIClient implements BWAPIEventListener {
 	private JNIBWAPI bwapi;
 	private final HashSet<Unit> claimedMinerals = new HashSet<>();
 	int o=0;
+
+	/** Milestone booleans */
+	private boolean firstPylon, firstGateway, firstZealot,
+			firstAssimilator, secondPylon, cyberCore, firstDragoon;
+
+	/** Number of probes at the first Assimilator */
+	private int gasProbes;
+
 	Position supply_pylon=new Position(0,0);
 	int supply_count=0;
 	LinkedList pylons=new LinkedList();
@@ -29,7 +37,6 @@ public class ExampleAIClient implements BWAPIEventListener {
 	LinkedList Attack=new LinkedList();
 	int race=0;
 	LinkedList Zealots=new LinkedList();
-	boolean completion=false;
 	int counter=0;
 	int building=0;
 	Unit worker;
@@ -57,13 +64,21 @@ public class ExampleAIClient implements BWAPIEventListener {
 		bwapi.enablePerfectInformation();
 		bwapi.setGameSpeed(20);
 		claimedMinerals.clear();
-
+		// reset agent state
+		firstPylon = false;
+		firstGateway = false;
+		firstZealot = false;
+		firstAssimilator = false;
+		secondPylon = false;
+		cyberCore = false;
+		firstDragoon = false;
+		gasProbes = 0;
 
 	}
 
 	private int mainbuild(UnitType x){
 		int z;
-		if (supply_count==0&&completion){
+		if (supply_count==0&&firstPylon){
 			z=1;
 		}
 		else{
@@ -270,16 +285,29 @@ public class ExampleAIClient implements BWAPIEventListener {
 
 		probe();
 		attack();
-		if(x.getMinerals()>50&&building==0){
-			for (Unit building : bwapi.getMyUnits()){
-				if(building.getType()==UnitType.UnitTypes.Protoss_Nexus && x.getMinerals()>50){
-					building.train(UnitType.UnitTypes.Protoss_Probe);
-					break;
+		// spawn probes
+		for (Unit unit : bwapi.getMyUnits()) {
+			if (unit.getType() == UnitType.UnitTypes.Protoss_Nexus) {
+				//Train probes until 8 supply
+				if (bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getSupplyUsed() < 16) {
+					unit.train(UnitType.UnitTypes.Protoss_Probe);
 				}
-			}}
+				//Train probes until 10 supply once the firstPylon is started
+				if (bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getSupplyUsed() < 20 && firstPylon == true) {
+					unit.train(UnitType.UnitTypes.Protoss_Probe);
+				}
+				//Train probes until 13 supply once the Gateway is started
+				if (bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getSupplyUsed() < 26 && firstGateway == true) {
+					unit.train(UnitType.UnitTypes.Protoss_Probe);
+				}
+				//Trains another probe after training first Zealot to hit 16 supply
+				if (bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getSupplyUsed() < 34 && firstZealot == true) {
+					unit.train(UnitType.UnitTypes.Protoss_Probe);
+				}
+			}
+		}
 
 		if(check==1 && x.getMinerals()>150){
-			System.out.println("DS");
 			for(Unit unit:bwapi.getMyUnits()){
 				if(unit.getType()==UnitType.UnitTypes.Protoss_Gateway){
 					unit.train(UnitType.UnitTypes.Protoss_Zealot);
@@ -288,6 +316,8 @@ public class ExampleAIClient implements BWAPIEventListener {
 				}
 			}
 		}
+
+		//building check and countdown
 		if(building==1){
 			if(worker.getDistance(distance)<50){
 				building=2;}}
@@ -304,16 +334,20 @@ public class ExampleAIClient implements BWAPIEventListener {
 						claimedMinerals.add(materials);
 						break;
 					}}}}
-		if (check==0){
+		if (!firstPylon){
 			for (Unit units:bwapi.getMyUnits()){
 				if(units.getType()==UnitType.UnitTypes.Protoss_Pylon && units.isCompleted()) {
-					completion = true;
+					firstPylon = true;
 				}}}
+		//ends here
 
-		if(x.getMinerals()>150&&check==0&&completion){
-			System.out.println(mainbuild(UnitType.UnitTypes.Protoss_Gateway));
-			check=1;
+		//build gateway when the first pylon is completed
+		if(x.getMinerals()>150&&firstPylon){
+			mainbuild(UnitType.UnitTypes.Protoss_Gateway);
+			firstGateway = true;
 		}
+
+		//keep building pylons
 		if(x.getSupplyUsed()+2>=x.getSupplyTotal()){
 			int count=0;
 			for (Unit units:bwapi.getMyUnits()){

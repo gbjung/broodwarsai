@@ -24,7 +24,7 @@ public class ProtossVsProtoss implements BWAPIEventListener {
 
     /** Milestone booleans */
     private boolean firstPylon, firstGateway, firstZealot,
-            firstAssimilator, secondPylon, cyberCore, firstDragoon, completion, worker
+            firstAssimilator, secondPylon, cyberCore, firstDragoon
             ;
 
     /** Number of probes at the first Assimilator */
