@@ -290,7 +290,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 		for (Unit unit : bwapi.getMyUnits()) {
 			if (unit.getType() == UnitType.UnitTypes.Protoss_Nexus) {
 				//Train probes until 8 supply
-				if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 9) {
+				if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 8) {
 					unit.train(UnitType.UnitTypes.Protoss_Probe);
 					accurate_supply ++;
 					break;
@@ -372,9 +372,12 @@ public class ExampleAIClient implements BWAPIEventListener {
 		//ends here
 
 		//build gateway when the first pylon is completed
-		if(x.getMinerals()>150&&firstPylon&&firstGateway==false){
+		if((x.getMinerals()>150&&firstPylon&&firstGateway==false)||accurate_supply==10){
 			mainbuild(UnitType.UnitTypes.Protoss_Gateway);
-			firstGateway = true;
+			for (Unit units:bwapi.getMyUnits()){
+				if(units.getType()==UnitType.UnitTypes.Protoss_Gateway && units.isCompleted()) {
+					firstGateway = true;
+				}}
 		}
 
 		//keep building pylons
