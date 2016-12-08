@@ -29,6 +29,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 
 	Position supply_pylon=new Position(0,0);
 	int supply_count=0;
+	int accurate_supply = 4;
 	LinkedList pylons=new LinkedList();
 	int check=0;
 	int cloaked=0;
@@ -138,7 +139,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 						for(int i=300;i<500;i++) {
 							int NewPylonX = Start_X + i;
 							Position NewPylon = new Position(NewPylonX, Start_Y);
-							if(bwapi.canBuildHere(NewPylon,UnitType.UnitTypes.Protoss_Pylon,true)==true) {
+							if(bwapi.canBuildHere(NewPylon,UnitType.UnitTypes.Protoss_Pylon,true)) {
 								builder.build(NewPylon, UnitType.UnitTypes.Protoss_Pylon);
 								pylons.add(NewPylon);
 								supply_pylon = NewPylon;
@@ -149,7 +150,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 						for(int i=300;i<500;i++){
 							int NewPylonX=Start_X-i;
 							Position NewPylon=new Position(NewPylonX,Start_Y);
-							if(bwapi.canBuildHere(NewPylon,UnitType.UnitTypes.Protoss_Pylon,true)==true) {
+							if(bwapi.canBuildHere(NewPylon,UnitType.UnitTypes.Protoss_Pylon,true)) {
 								pylons.add(NewPylon);
 								builder.build(NewPylon, UnitType.UnitTypes.Protoss_Pylon);
 								supply_pylon = NewPylon;
@@ -289,29 +290,54 @@ public class ExampleAIClient implements BWAPIEventListener {
 		for (Unit unit : bwapi.getMyUnits()) {
 			if (unit.getType() == UnitType.UnitTypes.Protoss_Nexus) {
 				//Train probes until 8 supply
-				if (bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getSupplyUsed() < 16) {
+				if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 8) {
 					unit.train(UnitType.UnitTypes.Protoss_Probe);
+					accurate_supply ++;
 				}
 				//Train probes until 10 supply once the firstPylon is started
-				if (bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getSupplyUsed() < 20 && firstPylon == true) {
+				if (bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getSupplyUsed() < 10 && firstPylon == true) {
 					unit.train(UnitType.UnitTypes.Protoss_Probe);
+					accurate_supply ++;
 				}
 				//Train probes until 13 supply once the Gateway is started
-				if (bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getSupplyUsed() < 26 && firstGateway == true) {
+				if (bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getSupplyUsed() < 13 && firstGateway == true) {
 					unit.train(UnitType.UnitTypes.Protoss_Probe);
+					accurate_supply ++;
 				}
 				//Trains another probe after training first Zealot to hit 16 supply
-				if (bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getSupplyUsed() < 34 && firstZealot == true) {
+				if (bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getSupplyUsed() < 16 && firstZealot == true) {
 					unit.train(UnitType.UnitTypes.Protoss_Probe);
+					accurate_supply ++;
 				}
 			}
+			//if the Assimilator is built, assign probes to mine gas until there are three probes getting gas
+			if (unit.getType() == UnitType.UnitTypes.Protoss_Probe && firstAssimilator == true && gasProbes < 3){
+				for (Unit gas : bwapi.getNeutralUnits()) {
+					if (gas.getType().isRefinery()) {
+						double distance = unit.getDistance(gas);
+
+						if (distance < 300) {
+							unit.rightClick(gas, false);
+							gasProbes++;
+							break;
+						}
+					}
+				}
+
+
+			}
+		}
+		if(accurate_supply==12 && x.getMinerals()>100){
+			mainbuild(UnitType.UnitTypes.Protoss_Assimilator);
+			firstAssimilator=true;
 		}
 
-		if(check==1 && x.getMinerals()>150){
+		if(accurate_supply==13 && x.getMinerals()>100){
 			for(Unit unit:bwapi.getMyUnits()){
 				if(unit.getType()==UnitType.UnitTypes.Protoss_Gateway){
 					unit.train(UnitType.UnitTypes.Protoss_Zealot);
-
+					accurate_supply = accurate_supply + 2;
+					firstZealot=true;
 
 				}
 			}
@@ -348,7 +374,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 		}
 
 		//keep building pylons
-		if(x.getSupplyUsed()+2>=x.getSupplyTotal()){
+		if(accurate_supply==8){
 			int count=0;
 			for (Unit units:bwapi.getMyUnits()){
 				if(units.getType()==UnitType.UnitTypes.Protoss_Pylon && units.isCompleted()){
@@ -361,13 +387,33 @@ public class ExampleAIClient implements BWAPIEventListener {
 
 			}
 		}
-		if(x.getSupplyUsed()+2>=x.getSupplyTotal()&&o==0&&x.getMinerals()>150){
+		if(accurate_supply==8&&x.getMinerals()>150){
 			supply();
 			o=1;
 		}
 
+		if(accurate_supply==16 && firstZealot==true){
+			int count=0;
+			for (Unit units:bwapi.getMyUnits()){
+				if(units.getType()==UnitType.UnitTypes.Protoss_Pylon && units.isCompleted()){
+					count+=1;
+				}
+			}
+			if(count==supply_count+1){
+				o=0;
+				supply_count+=1;
 
-
+			}
+		}
+		if(accurate_supply==16&& firstZealot==true&&x.getMinerals()>150){
+			supply();
+			o=1;
+			secondPylon=true;
+		}
+		if(accurate_supply==17&& secondPylon==true&&x.getMinerals()>100&&cyberCore==false){
+			mainbuild(UnitType.UnitTypes.Protoss_Cybernetics_Core);
+			cyberCore = true;
+		}
 		for (Unit myUnit : bwapi.getMyUnits()) {
 			if (myUnit.getType() == UnitType.UnitTypes.Protoss_Probe) {
 
