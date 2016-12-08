@@ -485,6 +485,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 					break;
 				}
 			}
+
 			//if the Assimilator is built, assign probes to mine gas until there are three probes getting gas
 			if (unit.getType() == UnitType.UnitTypes.Protoss_Probe && firstAssimilator == true && gasProbes < 3){
 				for (Unit gas : bwapi.getNeutralUnits()) {
@@ -502,21 +503,31 @@ public class ExampleAIClient implements BWAPIEventListener {
 
 			}
 		}
+		//Assimilator build section
+		/**
 		if(accurate_supply==12 && x.getMinerals()>100 && !firstAssimilator){
 			mainbuild(UnitType.UnitTypes.Protoss_Assimilator);
 			firstAssimilator=true;
 		}
-
-		if((accurate_supply==13 && x.getMinerals()>100 && firstZealot ==false)||(x.getMinerals()>400)){
-			for(Unit unit:bwapi.getMyUnits()){
-				if(unit.getType()==UnitType.UnitTypes.Protoss_Gateway){
+		**/
+		for(Unit unit:bwapi.getMyUnits()){
+			//Trains Zealots once supply is 13 or if a zealot hasnt been produced yet
+			if(unit.getType()==UnitType.UnitTypes.Protoss_Gateway){
+				if((accurate_supply==13 && x.getMinerals()>100 && firstZealot ==false)||firstZealot==false){
 					unit.train(UnitType.UnitTypes.Protoss_Zealot);
 					accurate_supply = accurate_supply + 2;
 					firstZealot=true;
-
+					}
+				}
+				//Trains Dragoon if CyberCore is build
+				else if(cyberCore==true&&x.getMinerals()>=125&&x.getGas()>=50){
+					unit.train(UnitType.UnitTypes.Protoss_Dragoon);
+					accurate_supply = accurate_supply +2;
+					firstDragoon=true;
 				}
 			}
-		}
+
+
 
 		//building check and countdown
 		if(building==1){
@@ -583,12 +594,12 @@ public class ExampleAIClient implements BWAPIEventListener {
 
 			}
 		}
-		if(accurate_supply==16&& firstZealot==true&&x.getMinerals()>150){
+		if(accurate_supply==16&&firstZealot==true&&x.getMinerals()>150){
 			supply();
 			o=1;
 			secondPylon=true;
 		}
-		if(accurate_supply==17&& secondPylon==true&&x.getMinerals()>100&&cyberCore==false){
+		if(secondPylon==true&&x.getMinerals()>100&&cyberCore==false){
 			mainbuild(UnitType.UnitTypes.Protoss_Cybernetics_Core);
 			cyberCore = true;
 		}
