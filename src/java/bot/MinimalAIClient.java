@@ -11,29 +11,29 @@ import jnibwapi.util.BWColor;
 
 public class MinimalAIClient implements BWAPIEventListener {
 	private JNIBWAPI bwapi;
-	
+
 	public static void main(String[] args) {
 		new MinimalAIClient();
 	}
-	
+
 	public MinimalAIClient() {
 		bwapi = new JNIBWAPI(this, false);
 		bwapi.start();
 	}
-	
+
 	@Override
 	public void connected() {}
-	
+
 	@Override
 	public void matchStart() {}
-	
+
 	@Override
 	public void matchFrame() {
 		for (Unit u : bwapi.getAllUnits()) {
 			bwapi.drawCircle(u.getPosition(), 5, BWColor.Red, true, false);
 		}
 	}
-	
+
 	@Override
 	public void keyPressed(int keyCode) {}
 	@Override

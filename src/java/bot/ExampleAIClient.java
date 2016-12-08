@@ -1,203 +1,360 @@
 package bot;
 
-import java.util.HashSet;
-
-import jnibwapi.BWAPIEventListener;
-import jnibwapi.JNIBWAPI;
-import jnibwapi.Position;
-import jnibwapi.Unit;
-import jnibwapi.types.TechType;
-import jnibwapi.types.TechType.TechTypes;
-import jnibwapi.types.UnitType;
-import jnibwapi.types.UnitType.UnitTypes;
-import jnibwapi.types.UpgradeType;
-import jnibwapi.types.UpgradeType.UpgradeTypes;
-
 /**
- * Example Java AI Client using JNI-BWAPI.
- * 
- * Executes a 5-pool rush and cheats using perfect information.
- * 
- * Note: the agent often gets stuck when attempting to build the spawning pool. It works best on
- * maps where the overlord spawns with plenty of free space around it.
+ * Example of a Java AI Client that does nothing.
  */
+import javafx.scene.layout.TilePane;
+
+import jnibwapi.*;
+
+import jnibwapi.types.UnitType;
+
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Objects;
+import java.util.Set;
+
+
 public class ExampleAIClient implements BWAPIEventListener {
-	
-	/** reference to JNI-BWAPI */
-	private final JNIBWAPI bwapi;
-	
-	/** used for mineral splits */
+	private JNIBWAPI bwapi;
 	private final HashSet<Unit> claimedMinerals = new HashSet<>();
-	
-	/** have drone 5 been morphed */
-	private boolean morphedDrone;
-	
-	/** the drone that has been assigned to building a pool */
-	private Unit poolDrone;
-	
-	/** when should the next overlord be spawned? */
-	private int supplyCap;
-	
-	/**
-	 * Create a Java AI.
-	 */
+	int o=0;
+	Position supply_pylon=new Position(0,0);
+	int supply_count=0;
+	LinkedList pylons=new LinkedList();
+	int gateway=0;
+	int check=0;
+	int cloaked=0;
+	boolean air=false;
+	Position base;
+	LinkedList Attack=new LinkedList();
+	int reset=0;
+	int race=0;
+	LinkedList Zealots=new LinkedList();
+	boolean completion=false;
+	int counter=0;
+	int building=0;
+	Unit worker;
+	Position distance;
+
+	Position buildpylon;
 	public static void main(String[] args) {
+
 		new ExampleAIClient();
 	}
-	
-	/**
-	 * Instantiates the JNI-BWAPI interface and connects to BWAPI.
-	 */
+
 	public ExampleAIClient() {
-		bwapi = new JNIBWAPI(this, true);
+		bwapi = new JNIBWAPI(this, false);
 		bwapi.start();
 	}
-	
-	/**
-	 * Connection to BWAPI established.
-	 */
+
 	@Override
-	public void connected() {
-		System.out.println("Connected");
-	}
-	
-	/**
-	 * Called at the beginning of a game.
-	 */
+	public void connected() {}
+
 	@Override
 	public void matchStart() {
 		System.out.println("Game Started");
-		
+
 		bwapi.enableUserInput();
 		bwapi.enablePerfectInformation();
-		bwapi.setGameSpeed(0);
-		
-		// reset agent state
+		bwapi.setGameSpeed(20);
 		claimedMinerals.clear();
-		morphedDrone = false;
-		poolDrone = null;
-		supplyCap = 0;
+
+
 	}
-	
-	/**
-	 * Called each game cycle.
-	 */
+
+	public int mainbuild(UnitType x){
+		int z=0;
+		if (supply_count==0&&completion==true){
+			z=1;
+		}
+		else{
+			z=supply_count;
+		}
+		for(int t=0;t<z;t++){
+			Position pylon= (Position) pylons.get(t);
+			int Start_X=pylon.getX(Position.PosType.PIXEL);
+			int Start_Y=pylon.getY(Position.PosType.PIXEL);
+			for(Unit builder :bwapi.getUnits(bwapi.getSelf())){
+				if (builder.getType()==UnitType.UnitTypes.Protoss_Probe) {
+					for(int i=0;i<300;i++){
+						int Newbuilding = Start_X + x.getDimensionUp()+i;
+						int Newbuilding1=Start_X - x.getDimensionUp()+i;
+						int NewBuilding2=Start_Y+x.getDimensionUp()+i;
+						int NewBuilding3=Start_Y-x.getDimensionUp()-i;
+
+						Position Newbuildingleft=new Position(Start_X,NewBuilding3);
+						Position Newbuildingright=new Position(Start_X,NewBuilding2);
+						Position Newbuildingup=new Position(Newbuilding,Start_Y);
+						Position Newbuildingdown=new Position(Newbuilding1,Start_Y);
+						worker=builder;
+						building=1;
+						if(bwapi.canBuildHere(Newbuildingleft,x,true)){
+							builder.build(Newbuildingleft,x);
+							distance=Newbuildingleft;
+
+							return 1;
+						}
+						else if(bwapi.canBuildHere(Newbuildingright,x,true)){
+							builder.build(Newbuildingright,x);
+							distance=Newbuildingright;
+							return 1;
+						}
+						else if(bwapi.canBuildHere(Newbuildingup,x,true)){
+							builder.build(Newbuildingup,x);
+							distance=Newbuildingup;
+							return 1;
+						}
+						else if(bwapi.canBuildHere(Newbuildingdown,x,true)){
+							builder.build(Newbuildingdown,x);
+							distance=Newbuildingdown;
+							return 1;
+						}
+					}
+
+				}}}return 0;}
+	public int supply(){
+		Position Start=bwapi.getSelf().getStartLocation();
+		int Start_X=Start.getX(Position.PosType.PIXEL);
+		int Start_Y=Start.getY(Position.PosType.PIXEL);
+		for(Unit builder :bwapi.getUnits(bwapi.getSelf())){
+			if (builder.getType()==UnitType.UnitTypes.Protoss_Probe) {
+				if(supply_pylon.getX(Position.PosType.PIXEL)==0){
+					if(Start_Y>3000){
+						System.out.println(4);
+						for(int i=300;i<500;i++) {
+							int NewPylonX = Start_X + i;
+							Position NewPylon = new Position(NewPylonX, Start_Y);
+							if(bwapi.canBuildHere(NewPylon,UnitType.UnitTypes.Protoss_Pylon,true)==true) {
+								builder.build(NewPylon, UnitType.UnitTypes.Protoss_Pylon);
+								pylons.add(NewPylon);
+								supply_pylon = NewPylon;
+								return 1;
+							}}}
+					if (Start_Y<3000){
+						System.out.println(3);
+						for(int i=300;i<500;i++){
+							int NewPylonX=Start_X-i;
+							Position NewPylon=new Position(NewPylonX,Start_Y);
+							if(bwapi.canBuildHere(NewPylon,UnitType.UnitTypes.Protoss_Pylon,true)==true) {
+								pylons.add(NewPylon);
+								builder.build(NewPylon, UnitType.UnitTypes.Protoss_Pylon);
+								supply_pylon = NewPylon;
+								return 1;
+							}}}}
+				else{
+					int PylonY=supply_pylon.getY(Position.PosType.PIXEL);
+					int Pylonx=supply_pylon.getX(Position.PosType.PIXEL);
+					if(Start_Y>3000){
+						System.out.println(2);
+						for(int i=0;i<200;i++){
+							PylonY=supply_pylon.getY(Position.PosType.PIXEL)+UnitType.UnitTypes.Protoss_Pylon.getDimensionUp()+i;
+							Position Newpylon=new Position(Pylonx,PylonY);
+							if(bwapi.canBuildHere(Newpylon,UnitType.UnitTypes.Protoss_Pylon,true)==true){
+								builder.build(Newpylon, UnitType.UnitTypes.Protoss_Pylon);
+								supply_pylon = Newpylon;
+								pylons.add(Newpylon);
+								return 1;
+							}
+						}
+					}
+					else if(Start_Y<3000){
+						System.out.println(1);
+						for(int i=0;i<200;i++){
+							PylonY=supply_pylon.getY(Position.PosType.PIXEL)+UnitType.UnitTypes.Protoss_Pylon.getDimensionUp()+i;
+							Position Newpylon=new Position(Pylonx,PylonY);
+							if(bwapi.canBuildHere(Newpylon,UnitType.UnitTypes.Protoss_Pylon,true)==true) {
+								builder.build(Newpylon, UnitType.UnitTypes.Protoss_Pylon);
+								supply_pylon = Newpylon;
+								pylons.add(Newpylon);
+								return 1;
+							}}}
+
+
+				}
+			}}return 0;}
+
+
+	public Position find(int count,Unit builder){
+		Player player=bwapi.getSelf();
+		int startY=0;
+		for(int i=300;i<500;i++){
+			int startX=player.getStartLocation().getX(Position.PosType.PIXEL);
+			if (player.getStartLocation().getX(Position.PosType.PIXEL)>3000){
+				startY=player.getStartLocation().getY(Position.PosType.PIXEL)-(count*10);}
+			else{
+				startY=player.getStartLocation().getY(Position.PosType.PIXEL)-(count*10);
+			}
+			if(startX>3000){
+				startX-=i;
+
+			}
+			else{
+				startX+=i;}
+
+			Position Test=new Position(startX,startY);
+
+			if (bwapi.canBuildHere(builder,Test,UnitType.UnitTypes.Protoss_Pylon,false)==true) {
+
+				System.out.println(i);
+				return Test;
+			}}
+		return new Position(0,0);
+	}
+
+	public void attack() {
+		if(Zealots.size()>=10){
+			for(int i=0;i<(Math.round(Zealots.size()*.5));i++){
+				Attack.add(Zealots.get(i));
+				Zealots.remove(i);
+
+			}
+		}
+		for(int i=0;i<Attack.size();i++){
+			Unit attacker=(Unit)Attack.get(i);
+			attacker.attack(base,false);
+		}
+	}
+
+
+	public void probe(){
+		bwapi.getEnemyUnits();
+		for (Unit enemies:bwapi.getEnemyUnits()){
+			if(race==0) {
+				if (enemies.getType() == UnitType.UnitTypes.Terran_Command_Center) {
+					race = 1;
+					base=enemies.getPosition();
+				} else if (enemies.getType() == UnitType.UnitTypes.Protoss_Nexus) {
+					race = 2;
+					base=enemies.getPosition();
+				} else if (enemies.getType() == UnitType.UnitTypes.Zerg_Hatchery) {
+					race = 3;
+					base=enemies.getPosition();
+				}
+
+			}
+			if(race==1){
+				if(air==false){
+					if(enemies.getType()==UnitType.UnitTypes.Terran_Starport){
+						air=true;
+					}
+				}
+			}
+			if(race==2){
+				if(cloaked==0){
+					if(enemies.getType()==UnitType.UnitTypes.Protoss_Dark_Templar){
+						cloaked=1;
+					}}
+				else if(air==false){
+					if(enemies.getType()==UnitType.UnitTypes.Protoss_Stargate){
+						air=true;
+					}
+				}
+			}
+			if(race==3){
+				if(air==false){
+					if(enemies.getType()==UnitType.UnitTypes.Zerg_Mutalisk){
+						air=true;
+					}
+				}
+			}
+
+
+		}
+	}
+
+
 	@Override
 	public void matchFrame() {
-		// print out some info about any upgrades or research happening
-		String msg = "=";
-		for (TechType t : TechTypes.getAllTechTypes()) {
-			if (bwapi.getSelf().isResearching(t)) {
-				msg += "Researching " + t.getName() + "=";
-			}
-			// Exclude tech that is given at the start of the game
-			UnitType whatResearches = t.getWhatResearches();
-			if (whatResearches == UnitTypes.None) {
-				continue;
-			}
-			if (bwapi.getSelf().isResearched(t)) {
-				msg += "Researched " + t.getName() + "=";
-			}
-		}
-		for (UpgradeType t : UpgradeTypes.getAllUpgradeTypes()) {
-			if (bwapi.getSelf().isUpgrading(t)) {
-				msg += "Upgrading " + t.getName() + "=";
-			}
-			if (bwapi.getSelf().getUpgradeLevel(t) > 0) {
-				int level = bwapi.getSelf().getUpgradeLevel(t);
-				msg += "Upgraded " + t.getName() + " to level " + level + "=";
-			}
-		}
-		bwapi.drawText(new Position(0, 20), msg, true);
-		
-		// draw the terrain information
-		bwapi.getMap().drawTerrainData(bwapi);
-		
-		// spawn a drone
-		for (Unit unit : bwapi.getMyUnits()) {
-			// Note you can use referential equality
-			if (unit.getType() == UnitTypes.Zerg_Larva) {
-				if (bwapi.getSelf().getMinerals() >= 50 && !morphedDrone) {
-					unit.morph(UnitTypes.Zerg_Drone);
-					morphedDrone = true;
+
+		//if we're running out of supply and have enough minerals ...
+		Player x=bwapi.getSelf();
+
+		probe();
+		attack();
+		if(x.getMinerals()>50&&building==0){
+			for (Unit building : bwapi.getUnits(x)){
+				if(building.getType()==UnitType.UnitTypes.Protoss_Nexus && x.getMinerals()>50){
+					building.train(UnitType.UnitTypes.Protoss_Probe);
+					break;
+				}
+			}}
+
+		if(check==1 && x.getMinerals()>150){
+			System.out.println("DS");
+			for(Unit unit:bwapi.getUnits(bwapi.getSelf())){
+				if(unit.getType()==UnitType.UnitTypes.Protoss_Gateway){
+					unit.train(UnitType.UnitTypes.Protoss_Zealot);
+
+
 				}
 			}
 		}
-		
-		// collect minerals
-		for (Unit unit : bwapi.getMyUnits()) {
-			if (unit.getType() == UnitTypes.Zerg_Drone) {
-				// You can use referential equality for units, too
-				if (unit.isIdle() && unit != poolDrone) {
-					for (Unit minerals : bwapi.getNeutralUnits()) {
-						if (minerals.getType().isMineralField()
-								&& !claimedMinerals.contains(minerals)) {
-							double distance = unit.getDistance(minerals);
-							
-							if (distance < 300) {
-								unit.rightClick(minerals, false);
-								claimedMinerals.add(minerals);
+		if(building==1){
+			if(worker.getDistance(distance)<50){
+				building=2;}}
+		if(building==2) {
+			counter += 1;
+		}if(counter==500){
+			counter=0;
+			building=0;
+			for (Unit materials : bwapi.getNeutralUnits()){
+				if(materials.getType().isMineralField()){
+					double distance= worker.getDistance(materials);
+					if (distance<500){
+						worker.rightClick(materials,false);
+						claimedMinerals.add(materials);
+						break;
+					}}}}
+		if (check==0){
+			for (Unit units:bwapi.getUnits(x)){
+				if(units.getType()==UnitType.UnitTypes.Protoss_Pylon && units.isCompleted()==true) {
+					completion = true;
+				}}}
+
+		if(x.getMinerals()>150&&check==0&&completion==true){
+			System.out.println(mainbuild(UnitType.UnitTypes.Protoss_Gateway));
+			check=1;
+		}
+		if(x.getSupplyUsed()+2>=x.getSupplyTotal()){
+			int count=0;
+			for (Unit units:bwapi.getUnits(x)){
+				if(units.getType()==UnitType.UnitTypes.Protoss_Pylon && units.isCompleted()==true){
+					count+=1;
+				}
+			}
+			if(count==supply_count+1){
+				o=0;
+				supply_count+=1;
+
+			}
+		}
+		if(x.getSupplyUsed()+2>=x.getSupplyTotal()&&o==0&&x.getMinerals()>150){
+			supply();
+			o=1;;
+		}
+
+
+
+		for (Unit myUnit : bwapi.getUnits(x)) {
+			if (myUnit.getType() == UnitType.UnitTypes.Protoss_Probe) {
+
+				if (myUnit.isIdle()){
+					for (Unit materials : bwapi.getNeutralUnits()){
+
+						if(materials.getType().isMineralField()){
+							double distance= myUnit.getDistance(materials);
+							if (distance<300){
+								myUnit.rightClick(materials,false);
+								claimedMinerals.add(materials);
 								break;
 							}
 						}
 					}
 				}
-			}
-		}
-		
-		// build a spawning pool
-		if (bwapi.getSelf().getMinerals() >= 200 && poolDrone == null) {
-			for (Unit unit : bwapi.getMyUnits()) {
-				if (unit.getType() == UnitTypes.Zerg_Drone) {
-					poolDrone = unit;
-					break;
-				}
-			}
-			
-			// build the pool under the overlord
-			for (Unit unit : bwapi.getMyUnits()) {
-				if (unit.getType() == UnitTypes.Zerg_Overlord) {
-					poolDrone.build(unit.getPosition(), UnitTypes.Zerg_Spawning_Pool);
-				}
-			}
-		}
-		
-		// spawn overlords
-		if (bwapi.getSelf().getSupplyUsed() + 2 >= bwapi.getSelf().getSupplyTotal()
-				&& bwapi.getSelf().getSupplyTotal() > supplyCap) {
-			if (bwapi.getSelf().getMinerals() >= 100) {
-				for (Unit larva : bwapi.getMyUnits()) {
-					if (larva.getType() == UnitTypes.Zerg_Larva) {
-						larva.morph(UnitTypes.Zerg_Overlord);
-						supplyCap = bwapi.getSelf().getSupplyTotal();
-					}
-				}
-			}
-		}
-		// spawn zerglings
-		else if (bwapi.getSelf().getMinerals() >= 50) {
-			for (Unit unit : bwapi.getMyUnits()) {
-				if (unit.getType() == UnitTypes.Zerg_Spawning_Pool && unit.isCompleted()) {
-					for (Unit larva : bwapi.getMyUnits()) {
-						if (larva.getType() == UnitTypes.Zerg_Larva) {
-							larva.morph(UnitTypes.Zerg_Zergling);
-						}
-					}
-				}
-			}
-		}
-		
-		// attack move toward an enemy
-		for (Unit unit : bwapi.getMyUnits()) {
-			if (unit.getType() == UnitTypes.Zerg_Zergling && unit.isIdle()) {
-				for (Unit enemy : bwapi.getEnemyUnits()) {
-					unit.attack(enemy.getPosition(), false);
-					break;
-				}
-			}
-		}
-	}
+			}}
 
+	}
 
 
 	@Override
