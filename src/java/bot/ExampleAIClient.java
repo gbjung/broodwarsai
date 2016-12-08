@@ -290,24 +290,28 @@ public class ExampleAIClient implements BWAPIEventListener {
 		for (Unit unit : bwapi.getMyUnits()) {
 			if (unit.getType() == UnitType.UnitTypes.Protoss_Nexus) {
 				//Train probes until 8 supply
-				if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 8) {
+				if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 9) {
 					unit.train(UnitType.UnitTypes.Protoss_Probe);
 					accurate_supply ++;
+					break;
 				}
 				//Train probes until 10 supply once the firstPylon is started
-				if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 10 && firstPylon == true) {
+				else if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 10 && firstPylon == true) {
 					unit.train(UnitType.UnitTypes.Protoss_Probe);
 					accurate_supply ++;
+					break;
 				}
 				//Train probes until 13 supply once the Gateway is started
-				if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 13 && firstGateway == true) {
+				else if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 13 && firstGateway == true) {
 					unit.train(UnitType.UnitTypes.Protoss_Probe);
 					accurate_supply ++;
+					break;
 				}
 				//Trains another probe after training first Zealot to hit 16 supply
-				if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 16 && firstZealot == true) {
+				else if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 16 && firstZealot == true) {
 					unit.train(UnitType.UnitTypes.Protoss_Probe);
 					accurate_supply ++;
+					break;
 				}
 			}
 			//if the Assimilator is built, assign probes to mine gas until there are three probes getting gas
@@ -332,7 +336,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 			firstAssimilator=true;
 		}
 
-		if(accurate_supply==13 && x.getMinerals()>100){
+		if((accurate_supply==13 && x.getMinerals()>100 && firstZealot ==false)||(x.getMinerals()>400)){
 			for(Unit unit:bwapi.getMyUnits()){
 				if(unit.getType()==UnitType.UnitTypes.Protoss_Gateway){
 					unit.train(UnitType.UnitTypes.Protoss_Zealot);
@@ -368,7 +372,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 		//ends here
 
 		//build gateway when the first pylon is completed
-		if(x.getMinerals()>150&&firstPylon){
+		if(x.getMinerals()>150&&firstPylon&&firstGateway==false){
 			mainbuild(UnitType.UnitTypes.Protoss_Gateway);
 			firstGateway = true;
 		}
@@ -431,7 +435,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 					}
 				}
 			}}
-
+		System.out.println(accurate_supply);
 	}
 
 
