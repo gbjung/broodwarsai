@@ -41,7 +41,12 @@ public class ExampleAIClient implements BWAPIEventListener {
 	int counter=0;
 	int building=0;
 	Unit worker;
+	int location;
+	int override=0;
+	Position origin;
 	Position distance;
+	Position runover;
+	Position runoverorigin;
 
 	Position buildpylon;
 	public static void main(String[] args) {
@@ -77,8 +82,10 @@ public class ExampleAIClient implements BWAPIEventListener {
 
 	}
 
-	private int mainbuild(UnitType x){
-		int z;
+	public int mainbuild(UnitType x){
+		int z=0;
+
+
 		if (supply_count==0&&firstPylon){
 			z=1;
 		}
@@ -89,7 +96,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 			Position pylon= (Position) pylons.get(t);
 			int Start_X=pylon.getX(Position.PosType.PIXEL);
 			int Start_Y=pylon.getY(Position.PosType.PIXEL);
-			for(Unit builder :bwapi.getMyUnits()){
+			for(Unit builder :bwapi.getUnits(bwapi.getSelf())){
 				if (builder.getType()==UnitType.UnitTypes.Protoss_Probe) {
 					for(int i=0;i<300;i++){
 						int Newbuilding = Start_X + x.getDimensionUp()+i;
@@ -127,40 +134,192 @@ public class ExampleAIClient implements BWAPIEventListener {
 					}
 
 				}}}return 0;}
-	private int supply(){
+	public int supply(){
 		Position Start=bwapi.getSelf().getStartLocation();
+		Map map=bwapi.getMap();
+		Position y=map.getSize();
+
+		int Mapx=y.getX(Position.PosType.PIXEL);
+		int Mapy=y.getY(Position.PosType.PIXEL);
 		int Start_X=Start.getX(Position.PosType.PIXEL);
 		int Start_Y=Start.getY(Position.PosType.PIXEL);
-		for(Unit builder :bwapi.getMyUnits()){
+
+
+		System.out.println("Start X"+Start_X + " "+ "MapX "+Mapx);
+		System.out.println("Start Y"+Start_Y+" "+"MapY "+Mapy);
+		if(Math.abs(Mapx-Start_X)<Start_X){
+			if(Math.abs(Mapy-Start_Y)<Start_Y){
+				System.out.println("Bottom Right");
+				location=4;
+			}
+			else{
+				System.out.println("Top Right");
+				location=1;
+			}
+		}
+		else{
+			if(Math.abs(Mapy-Start_Y)<Start_Y){
+				location=3;
+				System.out.println("Bottom Left");
+			}
+			else{
+				location=2;
+				System.out.println("Top Left");
+			}
+		}
+
+		for(Unit builder :bwapi.getUnits(bwapi.getSelf())){
 			if (builder.getType()==UnitType.UnitTypes.Protoss_Probe) {
 				if(supply_pylon.getX(Position.PosType.PIXEL)==0){
-					if(Start_Y>3000){
-						System.out.println(4);
+					if(location==2||location==3){
 						for(int i=300;i<500;i++) {
 							int NewPylonX = Start_X + i;
 							Position NewPylon = new Position(NewPylonX, Start_Y);
-							if(bwapi.canBuildHere(NewPylon,UnitType.UnitTypes.Protoss_Pylon,true)) {
+							if(bwapi.canBuildHere(NewPylon,UnitType.UnitTypes.Protoss_Pylon,true)==true) {
 								builder.build(NewPylon, UnitType.UnitTypes.Protoss_Pylon);
 								pylons.add(NewPylon);
 								supply_pylon = NewPylon;
+								origin=NewPylon;
 								return 1;
 							}}}
-					if (Start_Y<3000){
+					if (location==4|| location==1){
 						System.out.println(3);
 						for(int i=300;i<500;i++){
 							int NewPylonX=Start_X-i;
 							Position NewPylon=new Position(NewPylonX,Start_Y);
-							if(bwapi.canBuildHere(NewPylon,UnitType.UnitTypes.Protoss_Pylon,true)) {
+							if(bwapi.canBuildHere(NewPylon,UnitType.UnitTypes.Protoss_Pylon,true)==true) {
 								pylons.add(NewPylon);
 								builder.build(NewPylon, UnitType.UnitTypes.Protoss_Pylon);
 								supply_pylon = NewPylon;
+								origin= NewPylon;
 								return 1;
-							}}}}
+							}}}
+
+				}
 				else{
 					int PylonY=supply_pylon.getY(Position.PosType.PIXEL);
 					int Pylonx=supply_pylon.getX(Position.PosType.PIXEL);
-					if(Start_Y>3000){
-						System.out.println(2);
+					if(supply_count>4) {
+						if ((location == 1 || location == 2) && override == 0) {
+							Position Pylon = origin;
+							int Pylony = Pylon.getY(Position.PosType.PIXEL);
+							int PylonXV = Pylon.getX(Position.PosType.PIXEL);
+							for (int i = 75; i < 300; i++) {
+								PylonY = origin.getY(Position.PosType.PIXEL) - UnitType.UnitTypes.Protoss_Pylon.getDimensionUp() - i;
+								Position NewPylon = new Position(PylonXV, PylonY);
+								if (bwapi.canBuildHere(NewPylon, UnitType.UnitTypes.Protoss_Pylon, true) == true) {
+									builder.build(NewPylon, UnitType.UnitTypes.Protoss_Pylon);
+									override = 1;
+									runover = NewPylon;
+									origin=NewPylon;
+									runoverorigin=NewPylon;
+									return 1;
+								}
+							}
+						} else if ((location == 3 || location == 4) && override == 0) {
+							Position Pylon = origin;
+							int Pylony = Pylon.getY(Position.PosType.PIXEL);
+							int PylonXV = Pylon.getX(Position.PosType.PIXEL);
+							for (int i = 75; i < 300; i++) {
+								PylonY = origin.getY(Position.PosType.PIXEL) + UnitType.UnitTypes.Protoss_Pylon.getDimensionUp() + i;
+								Position NewPylon = new Position(PylonXV, PylonY);
+								if (bwapi.canBuildHere(NewPylon, UnitType.UnitTypes.Protoss_Pylon, true) == true) {
+									builder.build(NewPylon, UnitType.UnitTypes.Protoss_Pylon);
+									override = 1;
+									runover = NewPylon;
+									origin=NewPylon;
+									runoverorigin=NewPylon;
+									return 1;
+								}}}
+						else if((location == 3 || location == 4) && override == 1){
+							Position Pylon = origin;
+							int Pylony = Pylon.getY(Position.PosType.PIXEL);
+							int PylonXV = Pylon.getX(Position.PosType.PIXEL);
+							for (int i = 75; i < 300; i++) {
+								PylonY = runover.getY(Position.PosType.PIXEL) + UnitType.UnitTypes.Protoss_Pylon.getDimensionUp() + i;
+								Position NewPylon = new Position(PylonXV, PylonY);
+								if (bwapi.canBuildHere(NewPylon, UnitType.UnitTypes.Protoss_Pylon, true) == true) {
+									builder.build(NewPylon, UnitType.UnitTypes.Protoss_Pylon);
+									runover = NewPylon;
+									return 1;
+								}}
+
+						}
+						else if((location == 1 || location == 2) && override == 1){
+							Position Pylon = origin;
+							int Pylony = Pylon.getY(Position.PosType.PIXEL);
+							int PylonXV = Pylon.getX(Position.PosType.PIXEL);
+							for (int i = 75; i < 300; i++) {
+								PylonY = runover.getY(Position.PosType.PIXEL) - UnitType.UnitTypes.Protoss_Pylon.getDimensionUp()  -i;
+								Position NewPylon = new Position(PylonXV, PylonY);
+								if (bwapi.canBuildHere(NewPylon, UnitType.UnitTypes.Protoss_Pylon, true) == true) {
+									builder.build(NewPylon, UnitType.UnitTypes.Protoss_Pylon);
+									runover = NewPylon;
+									return 1;
+								}}
+							int redoy=runover.getY(Position.PosType.PIXEL);
+							int redox=runover.getX(Position.PosType.PIXEL);
+
+
+
+						}
+						int redoy=runoverorigin.getY(Position.PosType.PIXEL);
+						int redox=runoverorigin.getX(Position.PosType.PIXEL);
+						if(location==1||location==4){
+							for (int i = 0; i < 50; i++) {
+								int PylonXi = redox + UnitType.UnitTypes.Protoss_Pylon.getDimensionRight()  +i;
+								Position NewPylon = new Position(PylonXi, redoy);
+								if (bwapi.canBuildHere(NewPylon, UnitType.UnitTypes.Protoss_Pylon, true) == true) {
+									builder.build(NewPylon, UnitType.UnitTypes.Protoss_Pylon);
+									runover = NewPylon;
+									runoverorigin=NewPylon;
+									return 1;
+								}}
+						}
+						else if(location==2||location==3){
+							for (int i = 0; i < 50; i++) {
+								int PylonXi = redox - UnitType.UnitTypes.Protoss_Pylon.getDimensionRight()  -i;
+								Position NewPylon = new Position(PylonXi, redoy);
+								if (bwapi.canBuildHere(NewPylon, UnitType.UnitTypes.Protoss_Pylon, true) == true) {
+									builder.build(NewPylon, UnitType.UnitTypes.Protoss_Pylon);
+									runover = NewPylon;
+									runoverorigin=NewPylon;
+									return 1;
+								}}
+
+
+						}
+
+						if(location==1||location==4){
+							for (int i = 0; i < 50; i++) {
+								int PylonXi = origin.getX(Position.PosType.PIXEL) - UnitType.UnitTypes.Protoss_Pylon.getDimensionRight()  -i;
+								Position NewPylon = new Position(PylonXi, redoy);
+								if (bwapi.canBuildHere(NewPylon, UnitType.UnitTypes.Protoss_Pylon, true) == true) {
+									builder.build(NewPylon, UnitType.UnitTypes.Protoss_Pylon);
+									runover = NewPylon;
+									runoverorigin=NewPylon;
+									return 1;
+								}}
+						}
+						else if(location==2||location==3){
+							for (int i = 0; i < 50; i++) {
+								int PylonXi = origin.getX(Position.PosType.PIXEL) + UnitType.UnitTypes.Protoss_Pylon.getDimensionRight()  +i;
+								Position NewPylon = new Position(PylonXi, redoy);
+								if (bwapi.canBuildHere(NewPylon, UnitType.UnitTypes.Protoss_Pylon, true) == true) {
+									builder.build(NewPylon, UnitType.UnitTypes.Protoss_Pylon);
+									runover = NewPylon;
+									runoverorigin=NewPylon;
+									return 1;
+								}}
+
+
+						}}
+
+
+
+
+
+					if(location==1 || location==2){
 						for(int i=0;i<200;i++){
 							PylonY=supply_pylon.getY(Position.PosType.PIXEL)+UnitType.UnitTypes.Protoss_Pylon.getDimensionUp()+i;
 							Position Newpylon=new Position(Pylonx,PylonY);
@@ -172,10 +331,10 @@ public class ExampleAIClient implements BWAPIEventListener {
 							}
 						}
 					}
-					else if(Start_Y<3000){
+					else if(location==3||location==4){
 						System.out.println(1);
 						for(int i=0;i<200;i++){
-							PylonY=supply_pylon.getY(Position.PosType.PIXEL)+UnitType.UnitTypes.Protoss_Pylon.getDimensionUp()+i;
+							PylonY=supply_pylon.getY(Position.PosType.PIXEL)-UnitType.UnitTypes.Protoss_Pylon.getDimensionUp()-i;
 							Position Newpylon=new Position(Pylonx,PylonY);
 							if(bwapi.canBuildHere(Newpylon,UnitType.UnitTypes.Protoss_Pylon,true)==true) {
 								builder.build(Newpylon, UnitType.UnitTypes.Protoss_Pylon);
@@ -191,7 +350,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 
 	public Position find(int count,Unit builder){
 		Player player=bwapi.getSelf();
-		int startY;
+		int startY=0;
 		for(int i=300;i<500;i++){
 			int startX=player.getStartLocation().getX(Position.PosType.PIXEL);
 			if (player.getStartLocation().getX(Position.PosType.PIXEL)>3000){
@@ -208,7 +367,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 
 			Position Test=new Position(startX,startY);
 
-			if (bwapi.canBuildHere(builder,Test,UnitType.UnitTypes.Protoss_Pylon,false)) {
+			if (bwapi.canBuildHere(builder,Test,UnitType.UnitTypes.Protoss_Pylon,false)==true) {
 
 				System.out.println(i);
 				return Test;
@@ -216,9 +375,17 @@ public class ExampleAIClient implements BWAPIEventListener {
 		return new Position(0,0);
 	}
 
-	private void attack() {
+	public void attack() {
+		for (Unit unit:bwapi.getMyUnits()){
+			if(unit.getType()== UnitType.UnitTypes.Protoss_Zealot){
+				if(Zealots.contains(unit)==false&&Attack.contains(unit)==false){
+					Zealots.add(unit);
+				}
+			}
+		}
 		if(Zealots.size()>=10){
 			for(int i=0;i<(Math.round(Zealots.size()*.5));i++){
+				Zealots.get(i);
 				Attack.add(Zealots.get(i));
 				Zealots.remove(i);
 
@@ -231,7 +398,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 	}
 
 
-	private void probe(){
+	public void probe(){
 		bwapi.getEnemyUnits();
 		for (Unit enemies:bwapi.getEnemyUnits()){
 			if(race==0) {
@@ -248,7 +415,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 
 			}
 			if(race==1){
-				if(!air){
+				if(air==false){
 					if(enemies.getType()==UnitType.UnitTypes.Terran_Starport){
 						air=true;
 					}
@@ -259,14 +426,14 @@ public class ExampleAIClient implements BWAPIEventListener {
 					if(enemies.getType()==UnitType.UnitTypes.Protoss_Dark_Templar){
 						cloaked=1;
 					}}
-				else if(!air){
+				else if(air==false){
 					if(enemies.getType()==UnitType.UnitTypes.Protoss_Stargate){
 						air=true;
 					}
 				}
 			}
 			if(race==3){
-				if(!air){
+				if(air==false){
 					if(enemies.getType()==UnitType.UnitTypes.Zerg_Mutalisk){
 						air=true;
 					}
@@ -302,7 +469,11 @@ public class ExampleAIClient implements BWAPIEventListener {
 					break;
 				}
 				//Train probes until 13 supply once the Gateway is started
-				else if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 13 && firstGateway == true) {
+				else if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 12 && firstGateway == true) {
+					unit.train(UnitType.UnitTypes.Protoss_Probe);
+					accurate_supply ++;
+					break;
+				}else if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 13 && firstAssimilator == true) {
 					unit.train(UnitType.UnitTypes.Protoss_Probe);
 					accurate_supply ++;
 					break;
@@ -372,7 +543,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 		//ends here
 
 		//build gateway when the first pylon is completed
-		if((x.getMinerals()>150&&firstPylon&&firstGateway==false)||accurate_supply==10){
+		if((x.getMinerals()>150&&firstPylon&&firstGateway==false)){
 			mainbuild(UnitType.UnitTypes.Protoss_Gateway);
 			for (Unit units:bwapi.getMyUnits()){
 				if(units.getType()==UnitType.UnitTypes.Protoss_Gateway && units.isCompleted()) {
