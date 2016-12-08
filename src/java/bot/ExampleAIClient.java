@@ -449,7 +449,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 	public void matchFrame() {
 
 		//if we're running out of supply and have enough minerals ...
-		Player x = bwapi.getSelf();
+		Player x=bwapi.getSelf();
 
 		probe();
 		attack();
@@ -459,24 +459,165 @@ public class ExampleAIClient implements BWAPIEventListener {
 				//Train probes until 8 supply
 				if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 8) {
 					unit.train(UnitType.UnitTypes.Protoss_Probe);
-					accurate_supply++;
+					accurate_supply ++;
 					break;
 				}
 				//Train probes until 10 supply once the firstPylon is started
 				else if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 10 && firstPylon == true) {
 					unit.train(UnitType.UnitTypes.Protoss_Probe);
-					accurate_supply++;
+					accurate_supply ++;
 					break;
 				}
 				//Train probes until 13 supply once the Gateway is started
 				else if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 12 && firstGateway == false) {
 					unit.train(UnitType.UnitTypes.Protoss_Probe);
-					accurate_supply++;
+					accurate_supply ++;
+					break;
+				}else if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 13 && firstAssimilator == false) {
+					unit.train(UnitType.UnitTypes.Protoss_Probe);
+					accurate_supply ++;
+					break;
+				}
+				//Trains another probe after training first Zealot to hit 16 supply
+				else if (bwapi.getSelf().getMinerals() >= 50 && accurate_supply < 16 && firstZealot == true) {
+					unit.train(UnitType.UnitTypes.Protoss_Probe);
+					accurate_supply ++;
 					break;
 				}
 			}
 
+			//if the Assimilator is built, assign probes to mine gas until there are three probes getting gas
+			if (unit.getType() == UnitType.UnitTypes.Protoss_Probe && firstAssimilator == true && gasProbes < 3){
+				for (Unit gas : bwapi.getNeutralUnits()) {
+					if (gas.getType().isRefinery()) {
+						double distance = unit.getDistance(gas);
+
+						if (distance < 300) {
+							unit.rightClick(gas, false);
+							gasProbes++;
+							break;
+						}
+					}
+				}
+
+
+			}
 		}
+		//Assimilator build section
+		/**
+		if(accurate_supply==12 && x.getMinerals()>100 && !firstAssimilator){
+			mainbuild(UnitType.UnitTypes.Protoss_Assimilator);
+			firstAssimilator=true;
+		}
+		**/
+		for(Unit unit:bwapi.getMyUnits()){
+			//Trains Zealots once supply is 13 or if a zealot hasnt been produced yet
+			if(unit.getType()==UnitType.UnitTypes.Protoss_Gateway){
+				if((accurate_supply==13 && x.getMinerals()>100 && firstZealot ==false)||firstZealot==false){
+					unit.train(UnitType.UnitTypes.Protoss_Zealot);
+					accurate_supply = accurate_supply + 2;
+					firstZealot=true;
+					}
+				}
+				//Trains Dragoon if CyberCore is build
+				else if(cyberCore==true&&x.getMinerals()>=125&&x.getGas()>=50){
+					unit.train(UnitType.UnitTypes.Protoss_Dragoon);
+					accurate_supply = accurate_supply +2;
+					firstDragoon=true;
+				}
+			}
+
+
+
+		//building check and countdown
+		if(building==1){
+			if(worker.getDistance(distance)<50){
+				building=2;}}
+		if(building==2) {
+			counter += 1;
+		}if(counter==500){
+			counter=0;
+			building=0;
+			for (Unit materials : bwapi.getNeutralUnits()){
+				if(materials.getType().isMineralField()){
+					double distance= worker.getDistance(materials);
+					if (distance<500){
+						worker.rightClick(materials,false);
+						claimedMinerals.add(materials);
+						break;
+					}}}}
+		if (!firstPylon){
+			for (Unit units:bwapi.getMyUnits()){
+				if(units.getType()==UnitType.UnitTypes.Protoss_Pylon && units.isCompleted()) {
+					firstPylon = true;
+				}}}
+		//ends here
+
+		//build gateway when the first pylon is completed
+		if((x.getMinerals()>150&&firstPylon&&firstGateway==false)){
+			mainbuild(UnitType.UnitTypes.Protoss_Gateway);
+			firstGateway = true;
+		}
+
+		//keep building pylons
+		if(accurate_supply==8){
+			int count=0;
+			for (Unit units:bwapi.getMyUnits()){
+				if(units.getType()==UnitType.UnitTypes.Protoss_Pylon && units.isCompleted()){
+					count+=1;
+				}
+			}
+			if(count==supply_count+1){
+				o=0;
+				supply_count+=1;
+
+			}
+		}
+		if(accurate_supply==8&&x.getMinerals()>150){
+			supply();
+			o=1;
+		}
+
+		if(accurate_supply==16 && firstZealot==true){
+			int count=0;
+			for (Unit units:bwapi.getMyUnits()){
+				if(units.getType()==UnitType.UnitTypes.Protoss_Pylon && units.isCompleted()){
+					count+=1;
+				}
+			}
+			if(count==supply_count+1){
+				o=0;
+				supply_count+=1;
+
+			}
+		}
+		if(accurate_supply==16&&firstZealot==true&&x.getMinerals()>150){
+			supply();
+			o=1;
+			secondPylon=true;
+		}
+		if(secondPylon==true&&x.getMinerals()>100&&cyberCore==false){
+			mainbuild(UnitType.UnitTypes.Protoss_Cybernetics_Core);
+			cyberCore = true;
+		}
+		for (Unit myUnit : bwapi.getMyUnits()) {
+			if (myUnit.getType() == UnitType.UnitTypes.Protoss_Probe) {
+
+				if (myUnit.isIdle()){
+					for (Unit materials : bwapi.getNeutralUnits()){
+
+						if(materials.getType().isMineralField()){
+							double distance= myUnit.getDistance(materials);
+							if (distance<300){
+								myUnit.rightClick(materials,false);
+								claimedMinerals.add(materials);
+								break;
+							}
+						}
+					}
+				}
+			}}
+		System.out.println(accurate_supply);
 	}
 
 

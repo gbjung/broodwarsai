@@ -172,12 +172,15 @@ public class MinimalAIClient implements BWAPIEventListener {
 		}
 
 		//build gateway when the first pylon is completed
-		if((x.getMinerals()>150&&firstPylon&&firstGateway==false)||accurate_supply==12){
+		if((x.getMinerals()>=150&&firstPylon&&firstGateway==false)||firstGateway==false&&accurate_supply==12&&x.getMinerals()>=150){
 			mainbuild(UnitType.UnitTypes.Protoss_Gateway);
-			firstGateway = true;
 			System.out.println("building gateway");
 		}
-
+		for (Unit unit: bwapi.getMyUnits()){
+			if (unit.getType()==UnitType.UnitTypes.Protoss_Gateway && unit.isExists()){
+				firstGateway = true;
+			}
+		}
 		for (Unit myUnit : bwapi.getMyUnits()) {
 			if (myUnit.getType() == UnitType.UnitTypes.Protoss_Probe) {
 				if (myUnit.isIdle()){
