@@ -22,13 +22,11 @@ public class ExampleAIClient implements BWAPIEventListener {
 	Position supply_pylon=new Position(0,0);
 	int supply_count=0;
 	LinkedList pylons=new LinkedList();
-	int gateway=0;
 	int check=0;
 	int cloaked=0;
 	boolean air=false;
 	Position base;
 	LinkedList Attack=new LinkedList();
-	int reset=0;
 	int race=0;
 	LinkedList Zealots=new LinkedList();
 	boolean completion=false;
@@ -63,9 +61,9 @@ public class ExampleAIClient implements BWAPIEventListener {
 
 	}
 
-	public int mainbuild(UnitType x){
-		int z=0;
-		if (supply_count==0&&completion==true){
+	private int mainbuild(UnitType x){
+		int z;
+		if (supply_count==0&&completion){
 			z=1;
 		}
 		else{
@@ -75,7 +73,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 			Position pylon= (Position) pylons.get(t);
 			int Start_X=pylon.getX(Position.PosType.PIXEL);
 			int Start_Y=pylon.getY(Position.PosType.PIXEL);
-			for(Unit builder :bwapi.getUnits(bwapi.getSelf())){
+			for(Unit builder :bwapi.getMyUnits()){
 				if (builder.getType()==UnitType.UnitTypes.Protoss_Probe) {
 					for(int i=0;i<300;i++){
 						int Newbuilding = Start_X + x.getDimensionUp()+i;
@@ -113,11 +111,11 @@ public class ExampleAIClient implements BWAPIEventListener {
 					}
 
 				}}}return 0;}
-	public int supply(){
+	private int supply(){
 		Position Start=bwapi.getSelf().getStartLocation();
 		int Start_X=Start.getX(Position.PosType.PIXEL);
 		int Start_Y=Start.getY(Position.PosType.PIXEL);
-		for(Unit builder :bwapi.getUnits(bwapi.getSelf())){
+		for(Unit builder :bwapi.getMyUnits()){
 			if (builder.getType()==UnitType.UnitTypes.Protoss_Probe) {
 				if(supply_pylon.getX(Position.PosType.PIXEL)==0){
 					if(Start_Y>3000){
@@ -177,7 +175,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 
 	public Position find(int count,Unit builder){
 		Player player=bwapi.getSelf();
-		int startY=0;
+		int startY;
 		for(int i=300;i<500;i++){
 			int startX=player.getStartLocation().getX(Position.PosType.PIXEL);
 			if (player.getStartLocation().getX(Position.PosType.PIXEL)>3000){
@@ -194,7 +192,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 
 			Position Test=new Position(startX,startY);
 
-			if (bwapi.canBuildHere(builder,Test,UnitType.UnitTypes.Protoss_Pylon,false)==true) {
+			if (bwapi.canBuildHere(builder,Test,UnitType.UnitTypes.Protoss_Pylon,false)) {
 
 				System.out.println(i);
 				return Test;
@@ -202,7 +200,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 		return new Position(0,0);
 	}
 
-	public void attack() {
+	private void attack() {
 		if(Zealots.size()>=10){
 			for(int i=0;i<(Math.round(Zealots.size()*.5));i++){
 				Attack.add(Zealots.get(i));
@@ -217,7 +215,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 	}
 
 
-	public void probe(){
+	private void probe(){
 		bwapi.getEnemyUnits();
 		for (Unit enemies:bwapi.getEnemyUnits()){
 			if(race==0) {
@@ -234,7 +232,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 
 			}
 			if(race==1){
-				if(air==false){
+				if(!air){
 					if(enemies.getType()==UnitType.UnitTypes.Terran_Starport){
 						air=true;
 					}
@@ -245,14 +243,14 @@ public class ExampleAIClient implements BWAPIEventListener {
 					if(enemies.getType()==UnitType.UnitTypes.Protoss_Dark_Templar){
 						cloaked=1;
 					}}
-				else if(air==false){
+				else if(!air){
 					if(enemies.getType()==UnitType.UnitTypes.Protoss_Stargate){
 						air=true;
 					}
 				}
 			}
 			if(race==3){
-				if(air==false){
+				if(!air){
 					if(enemies.getType()==UnitType.UnitTypes.Zerg_Mutalisk){
 						air=true;
 					}
@@ -273,7 +271,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 		probe();
 		attack();
 		if(x.getMinerals()>50&&building==0){
-			for (Unit building : bwapi.getUnits(x)){
+			for (Unit building : bwapi.getMyUnits()){
 				if(building.getType()==UnitType.UnitTypes.Protoss_Nexus && x.getMinerals()>50){
 					building.train(UnitType.UnitTypes.Protoss_Probe);
 					break;
@@ -282,7 +280,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 
 		if(check==1 && x.getMinerals()>150){
 			System.out.println("DS");
-			for(Unit unit:bwapi.getUnits(bwapi.getSelf())){
+			for(Unit unit:bwapi.getMyUnits()){
 				if(unit.getType()==UnitType.UnitTypes.Protoss_Gateway){
 					unit.train(UnitType.UnitTypes.Protoss_Zealot);
 
@@ -307,19 +305,19 @@ public class ExampleAIClient implements BWAPIEventListener {
 						break;
 					}}}}
 		if (check==0){
-			for (Unit units:bwapi.getUnits(x)){
-				if(units.getType()==UnitType.UnitTypes.Protoss_Pylon && units.isCompleted()==true) {
+			for (Unit units:bwapi.getMyUnits()){
+				if(units.getType()==UnitType.UnitTypes.Protoss_Pylon && units.isCompleted()) {
 					completion = true;
 				}}}
 
-		if(x.getMinerals()>150&&check==0&&completion==true){
+		if(x.getMinerals()>150&&check==0&&completion){
 			System.out.println(mainbuild(UnitType.UnitTypes.Protoss_Gateway));
 			check=1;
 		}
 		if(x.getSupplyUsed()+2>=x.getSupplyTotal()){
 			int count=0;
-			for (Unit units:bwapi.getUnits(x)){
-				if(units.getType()==UnitType.UnitTypes.Protoss_Pylon && units.isCompleted()==true){
+			for (Unit units:bwapi.getMyUnits()){
+				if(units.getType()==UnitType.UnitTypes.Protoss_Pylon && units.isCompleted()){
 					count+=1;
 				}
 			}
@@ -331,12 +329,12 @@ public class ExampleAIClient implements BWAPIEventListener {
 		}
 		if(x.getSupplyUsed()+2>=x.getSupplyTotal()&&o==0&&x.getMinerals()>150){
 			supply();
-			o=1;;
+			o=1;
 		}
 
 
 
-		for (Unit myUnit : bwapi.getUnits(x)) {
+		for (Unit myUnit : bwapi.getMyUnits()) {
 			if (myUnit.getType() == UnitType.UnitTypes.Protoss_Probe) {
 
 				if (myUnit.isIdle()){
