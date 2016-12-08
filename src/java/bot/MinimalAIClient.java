@@ -172,7 +172,7 @@ public class MinimalAIClient implements BWAPIEventListener {
 		}
 
 		//build gateway when the first pylon is completed
-		if((x.getMinerals()>150&&firstPylon&&firstGateway==false)){
+		if((x.getMinerals()>150&&firstPylon&&firstGateway==false)||accurate_supply==12){
 			mainbuild(UnitType.UnitTypes.Protoss_Gateway);
 			firstGateway = true;
 			System.out.println("building gateway");
@@ -298,7 +298,6 @@ public class MinimalAIClient implements BWAPIEventListener {
 								return 1;
 							}}}
 					if (location==4|| location==1){
-						System.out.println(3);
 						for(int i=300;i<500;i++){
 							int NewPylonX=Start_X-i;
 							Position NewPylon=new Position(NewPylonX,Start_Y);
@@ -447,7 +446,6 @@ public class MinimalAIClient implements BWAPIEventListener {
 						}
 					}
 					else if(location==3||location==4){
-						System.out.println(1);
 						for(int i=0;i<200;i++){
 							PylonY=supply_pylon.getY(Position.PosType.PIXEL)-UnitType.UnitTypes.Protoss_Pylon.getDimensionUp()-i;
 							Position Newpylon=new Position(Pylonx,PylonY);
