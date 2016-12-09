@@ -145,24 +145,29 @@ public class JonClient implements BWAPIEventListener {
             o=1;;
         }
 
+        for (Unit assim:bwapi.getUnits(x)){
+            if (gas) {
+                if (assim.getType().isRefinery()&&gasProbes<3) {
+                    if(assim.isCompleted()){
+                        if(assim.isBeingGathered()){
+                            System.out.println("being gathered");
+                        }
+                        System.out.println("this part works")
+                        ;                    for (Unit myUnit:bwapi.getUnits(x)){
+                            if((myUnit.getType().isWorker()||myUnit.isGatheringMinerals())&&gasProbes<3){
+                                myUnit.gather(assim, false);
+                                gasProbes++;
+                                System.out.println("assigned");
 
+                            }
 
+                        }
+
+                    }}
+            }}
         for (Unit myUnit : bwapi.getUnits(x)) {
             if (myUnit.getType() == UnitType.UnitTypes.Protoss_Probe) {
-            if (gas&&gasProbes < 3) {
-                for (Unit assim : bwapi.getNeutralUnits()) {
-                    if (assim.getType().isRefinery()) {
-                        double distance = myUnit.getDistance(assim);
-
-                        if (distance < 300) {
-                            myUnit.rightClick(assim, false);
-                            gasProbes++;
-                            break;
-                        }
-                    }
-                }
-            }
-                if (myUnit.isIdle()){
+                if (myUnit.isIdle()&&!myUnit.isGatheringGas()&&!myUnit.isCarryingGas()){
                     for (Unit materials : bwapi.getNeutralUnits()){
 
                         if(materials.getType().isMineralField()){
