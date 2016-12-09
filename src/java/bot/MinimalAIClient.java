@@ -89,14 +89,12 @@ public class MinimalAIClient implements BWAPIEventListener {
 				if (x.getMinerals() >= 50 && accurate_supply < 8) {
 					unit.train(UnitType.UnitTypes.Protoss_Probe);
 					accurate_supply ++;
-					System.out.println(accurate_supply);
 					break;
 				}
 				//Train probes until 13 supply once the Gateway is started
 				else if (x.getMinerals() >= 50 &&firstPylon == true && accurate_supply < 12 && firstGateway == false) {
 					unit.train(UnitType.UnitTypes.Protoss_Probe);
 					accurate_supply ++;
-					System.out.println(accurate_supply);
 					break;
 				}
 			}
@@ -165,7 +163,7 @@ public class MinimalAIClient implements BWAPIEventListener {
 
 			}
 		}
-		if(accurate_supply==8&&x.getMinerals()>150){
+		if(accurate_supply==8&&x.getMinerals()>150&&o==0){
 			supply();
 			o=1;
 			System.out.println("Building first Pylon");
