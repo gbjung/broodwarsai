@@ -33,6 +33,7 @@ public class JonClient implements BWAPIEventListener {
     LinkedList Attack=new LinkedList();
     int reset=0;
     int race=0;
+    int gasProbes=0;
     LinkedList Zealots=new LinkedList();
     boolean completion=false;
     int counter=0;
@@ -72,6 +73,111 @@ public class JonClient implements BWAPIEventListener {
 
     }
 
+    @Override
+    public void matchFrame() {
+
+        //if we're running out of supply and have enough minerals ...
+        Player x=bwapi.getSelf();
+
+        probe();
+
+        if(x.getMinerals()>50&&building==0){
+            for (Unit building : bwapi.getUnits(x)){
+                if(building.getType()==UnitType.UnitTypes.Protoss_Nexus && x.getMinerals()>50){
+                    building.train(UnitType.UnitTypes.Protoss_Probe);
+                    break;
+                }
+            }}
+
+        if(check==1 && x.getMinerals()>150){
+            for(Unit unit:bwapi.getUnits(bwapi.getSelf())){
+                if(unit.getType()==UnitType.UnitTypes.Protoss_Gateway){
+                    unit.train(UnitType.UnitTypes.Protoss_Zealot);
+                }
+            }
+        }
+        if(building==1){
+            if(worker.getDistance(distance)<50){
+                building=2;}}
+        if(building==2) {
+            counter += 1;
+        }if(counter==500){
+            counter=0;
+            building=0;
+            for (Unit materials : bwapi.getNeutralUnits()){
+                if(materials.getType().isMineralField()){
+                    double distance= worker.getDistance(materials);
+                    if (distance<500){
+                        worker.rightClick(materials,false);
+                        claimedMinerals.add(materials);
+                        break;
+                    }}}}
+        if (check==0){
+            for (Unit units:bwapi.getUnits(x)){
+                if(units.getType()==UnitType.UnitTypes.Protoss_Pylon && units.isCompleted()==true) {
+                    completion = true;
+                }}}
+
+        if(x.getMinerals()>100&&building==0&&gas==false&&completion==true){
+            System.out.println(5555);
+            mainbuild(UnitType.UnitTypes.Protoss_Assimilator);
+            gas=true;
+        }
+        if(x.getMinerals()>150&&check==0&&completion==true&&building==0){
+            System.out.println(mainbuild(UnitType.UnitTypes.Protoss_Gateway));
+            check=1;
+        }
+        if(x.getSupplyUsed()+2>=x.getSupplyTotal()){
+            int count=0;
+            for (Unit units:bwapi.getUnits(x)){
+                if(units.getType()==UnitType.UnitTypes.Protoss_Pylon && units.isCompleted()==true){
+                    count+=1;
+                }
+            }
+            if(count==supply_count+1){
+                o=0;
+                supply_count+=1;
+
+            }
+        }
+        if(x.getSupplyUsed()+2>=x.getSupplyTotal()&&o==0&&x.getMinerals()>150){
+            supply();
+            o=1;;
+        }
+
+
+
+        for (Unit myUnit : bwapi.getUnits(x)) {
+            if (myUnit.getType() == UnitType.UnitTypes.Protoss_Probe) {
+            if (gas&&gasProbes < 3) {
+                for (Unit assim : bwapi.getNeutralUnits()) {
+                    if (assim.getType().isRefinery()) {
+                        double distance = myUnit.getDistance(assim);
+
+                        if (distance < 300) {
+                            myUnit.rightClick(assim, false);
+                            gasProbes++;
+                            break;
+                        }
+                    }
+                }
+            }
+                if (myUnit.isIdle()){
+                    for (Unit materials : bwapi.getNeutralUnits()){
+
+                        if(materials.getType().isMineralField()){
+                            double distance= myUnit.getDistance(materials);
+                            if (distance<300){
+                                myUnit.rightClick(materials,false);
+                                claimedMinerals.add(materials);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }}
+
+    }
     public int mainbuild(UnitType x){
         int z=0;
 
@@ -472,101 +578,6 @@ public class JonClient implements BWAPIEventListener {
 
 
         }
-    }
-
-
-    @Override
-    public void matchFrame() {
-
-        //if we're running out of supply and have enough minerals ...
-        Player x=bwapi.getSelf();
-
-        probe();
-
-        if(x.getMinerals()>50&&building==0){
-            for (Unit building : bwapi.getUnits(x)){
-                if(building.getType()==UnitType.UnitTypes.Protoss_Nexus && x.getMinerals()>50){
-                    building.train(UnitType.UnitTypes.Protoss_Probe);
-                    break;
-                }
-            }}
-
-        if(check==1 && x.getMinerals()>150){
-            for(Unit unit:bwapi.getUnits(bwapi.getSelf())){
-                if(unit.getType()==UnitType.UnitTypes.Protoss_Gateway){
-                    unit.train(UnitType.UnitTypes.Protoss_Zealot);
-                }
-            }
-        }
-        if(building==1){
-            if(worker.getDistance(distance)<50){
-                building=2;}}
-        if(building==2) {
-            counter += 1;
-        }if(counter==500){
-            counter=0;
-            building=0;
-            for (Unit materials : bwapi.getNeutralUnits()){
-                if(materials.getType().isMineralField()){
-                    double distance= worker.getDistance(materials);
-                    if (distance<500){
-                        worker.rightClick(materials,false);
-                        claimedMinerals.add(materials);
-                        break;
-                    }}}}
-        if (check==0){
-            for (Unit units:bwapi.getUnits(x)){
-                if(units.getType()==UnitType.UnitTypes.Protoss_Pylon && units.isCompleted()==true) {
-                    completion = true;
-                }}}
-
-        if(x.getMinerals()>100&&building==0&&gas==false&&completion==true){
-            System.out.println(5555);
-            mainbuild(UnitType.UnitTypes.Protoss_Assimilator);
-            gas=true;
-        }
-        if(x.getMinerals()>150&&check==0&&completion==true&&building==0){
-            System.out.println(mainbuild(UnitType.UnitTypes.Protoss_Gateway));
-            check=1;
-        }
-        if(x.getSupplyUsed()+2>=x.getSupplyTotal()){
-            int count=0;
-            for (Unit units:bwapi.getUnits(x)){
-                if(units.getType()==UnitType.UnitTypes.Protoss_Pylon && units.isCompleted()==true){
-                    count+=1;
-                }
-            }
-            if(count==supply_count+1){
-                o=0;
-                supply_count+=1;
-
-            }
-        }
-        if(x.getSupplyUsed()+2>=x.getSupplyTotal()&&o==0&&x.getMinerals()>150){
-            supply();
-            o=1;;
-        }
-
-
-
-        for (Unit myUnit : bwapi.getUnits(x)) {
-            if (myUnit.getType() == UnitType.UnitTypes.Protoss_Probe) {
-
-                if (myUnit.isIdle()){
-                    for (Unit materials : bwapi.getNeutralUnits()){
-
-                        if(materials.getType().isMineralField()){
-                            double distance= myUnit.getDistance(materials);
-                            if (distance<300){
-                                myUnit.rightClick(materials,false);
-                                claimedMinerals.add(materials);
-                                break;
-                            }
-                        }
-                    }
-                }
-            }}
-
     }
 
 
