@@ -26,7 +26,7 @@ public class JonClient implements BWAPIEventListener {
     Position supply_pylon=new Position(0,0);
     int supply_count=0;
     LinkedList pylons=new LinkedList();
-    HashSet<Unit> probes = new HashSet();
+    int probes = 0;
     int gateway=0;
     int check=0;
     int cloaked=0;
@@ -88,13 +88,17 @@ public class JonClient implements BWAPIEventListener {
 
         if(building==0) {
             for (Unit building : bwapi.getUnits(x)) {
-                if (building.getType() == UnitType.UnitTypes.Protoss_Nexus && x.getMinerals() > 50 && interrupt != 0 && probes.size()<14) {
+                if (building.getType() == UnitType.UnitTypes.Protoss_Nexus && x.getMinerals() > 50 && interrupt != 0 && probes< 15) {
                     building.train(UnitType.UnitTypes.Protoss_Probe);
                     break;
                 }
+            }
+        }
+            for(Unit building : bwapi.getUnits(x)) {
+                int probecounter = 0;
                 if (building.getType() == UnitType.UnitTypes.Protoss_Probe){
-                    probes.add(building);
-                    System.out.println(probes);
+                    probecounter++;
+                    break;
                 }
                 if (building.getType() == UnitType.UnitTypes.Protoss_Gateway && check == 0) {
                     if (building.isBeingConstructed()) {
@@ -121,8 +125,9 @@ public class JonClient implements BWAPIEventListener {
                         break;
                     }
                 }
+                probes = probecounter;
             }
-        }
+
 
 
         if(building==1){
