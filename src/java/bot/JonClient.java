@@ -83,94 +83,21 @@ public class JonClient implements BWAPIEventListener {
         Player x=bwapi.getSelf();
 
         probe();
-        if(assimilated&&x.getMinerals()>=200&&!cybercored){
-            mainbuild(UnitType.UnitTypes.Protoss_Cybernetics_Core);
-            System.out.println("cybercore built");
+        if (!cybercored) {
+            earlygame(x);
         }
-        if(building==0) {
-            for (Unit building : bwapi.getUnits(x)) {
-                if (building.getType() == UnitType.UnitTypes.Protoss_Nexus && x.getMinerals() > 50 && interrupt != 0) {
-                    building.train(UnitType.UnitTypes.Protoss_Probe);
-                    break;
-                }
-            }
-        }
-            for (Unit building : bwapi.getUnits(x)) {
-                if (building.getType() == UnitType.UnitTypes.Protoss_Gateway && check == 0) {
-                    if (building.isBeingConstructed()) {
-                        System.out.println("Gatewaycheck");
-                        check = 1;
-                        interrupt = 1;
-                        break;
-                    }
-
-                }
-
-
-                if (building.getType() == UnitType.UnitTypes.Protoss_Assimilator && !assimilated) {
-                    if (building.isBeingConstructed()) {
-                        System.out.println("Assimilator check");
-                        assimilated = true;
-                        break;
-                    }
-                }
-                if (building.getType() == UnitType.UnitTypes.Protoss_Cybernetics_Core && !cybercored) {
-                    if (building.isBeingConstructed()) {
-                        System.out.println("cybercore check");
-                        cybercored = true;
-                        break;
-                    }
-                }
-            }
-
-
-
-        if(building==1){
-            if(worker.getDistance(distance)<50){
-                building=2;}}
-        if(building==2) {
-            counter += 1;
-        }if(counter==500){
-            counter=0;
-            building=0;
-            for (Unit materials : bwapi.getNeutralUnits()){
-                if(materials.getType().isMineralField()){
-                    double distance= worker.getDistance(materials);
-                    if (distance<500){
-                        worker.rightClick(materials,false);
-                        claimedMinerals.add(materials);
-                        break;
-                    }}}}
-        if (check==0){
+        if(cybercored){
+            System.out.println("You did it!");
             for (Unit units:bwapi.getUnits(x)){
-                if(completion==false&&units.getType()==UnitType.UnitTypes.Protoss_Pylon && units.isCompleted()==true) {
-                    completion = true;
-                    System.out.println("Pylon built");
-                    interrupt = 0;
-                }}
-            if(x.getMinerals()>=150&&completion==true&&building==0){
-                mainbuild(UnitType.UnitTypes.Protoss_Gateway);
-                System.out.println("should build gateway");
-            }
-        }
-        if(x.getMinerals()>=150&&completion==true&&building==0&&check==0){
-            mainbuild(UnitType.UnitTypes.Protoss_Gateway);
-            System.out.println("WHY HERE build gateway");
-        }
-    if(x.getMinerals() >= 100 && !assimilated && check==1){
-        mainbuild(UnitType.UnitTypes.Protoss_Assimilator);
-        System.out.println("WHY HERE assimilator");
-    }
-    if(check ==1) {
-        if((gas = true && x.getMinerals()>150)||x.getMinerals()>400){
-            for(Unit unit:bwapi.getUnits(bwapi.getSelf())){
-                if(unit.getType()==UnitType.UnitTypes.Protoss_Gateway){
-                    unit.train(UnitType.UnitTypes.Protoss_Zealot);
-                    break;
+                if(units.getType()==UnitType.UnitTypes.Protoss_Gateway){
+                    if(x.getGas()>=50 && x.getMinerals()>=200) {
+                        units.train(UnitType.UnitTypes.Protoss_Dragoon);
+                    }else if(x.getMinerals()>=400){
+                        units.train(UnitType.UnitTypes.Protoss_Zealot);
+                    }
                 }
             }
         }
-    }
 
 
         if(x.getSupplyUsed()+2>=x.getSupplyTotal()){
@@ -225,6 +152,97 @@ public class JonClient implements BWAPIEventListener {
                 }
             }}
 
+    }
+
+    public void earlygame(Player x){
+        if(assimilated&&x.getMinerals()>=200&&!cybercored){
+            mainbuild(UnitType.UnitTypes.Protoss_Cybernetics_Core);
+            System.out.println("cybercore built");
+        }
+        if(building==0) {
+            for (Unit building : bwapi.getUnits(x)) {
+                if (building.getType() == UnitType.UnitTypes.Protoss_Nexus && x.getMinerals() > 50 && interrupt != 0) {
+                    building.train(UnitType.UnitTypes.Protoss_Probe);
+                    break;
+                }
+            }
+        }
+        for (Unit building : bwapi.getUnits(x)) {
+            if (building.getType() == UnitType.UnitTypes.Protoss_Gateway && check == 0) {
+                if (building.isBeingConstructed()) {
+                    System.out.println("Gatewaycheck");
+                    check = 1;
+                    interrupt = 1;
+                    break;
+                }
+
+            }
+
+
+            if (building.getType() == UnitType.UnitTypes.Protoss_Assimilator && !assimilated) {
+                if (building.isBeingConstructed()) {
+                    System.out.println("Assimilator check");
+                    assimilated = true;
+                    break;
+                }
+            }
+            if (building.getType() == UnitType.UnitTypes.Protoss_Cybernetics_Core && !cybercored) {
+                if (building.isBeingConstructed()) {
+                    System.out.println("cybercore check");
+                    cybercored = true;
+                    break;
+                }
+            }
+        }
+
+
+
+        if(building==1){
+            if(worker.getDistance(distance)<50){
+                building=2;}}
+        if(building==2) {
+            counter += 1;
+        }if(counter==500){
+            counter=0;
+            building=0;
+            for (Unit materials : bwapi.getNeutralUnits()){
+                if(materials.getType().isMineralField()){
+                    double distance= worker.getDistance(materials);
+                    if (distance<500){
+                        worker.rightClick(materials,false);
+                        claimedMinerals.add(materials);
+                        break;
+                    }}}}
+        if (check==0){
+            for (Unit units:bwapi.getUnits(x)){
+                if(completion==false&&units.getType()==UnitType.UnitTypes.Protoss_Pylon && units.isCompleted()==true) {
+                    completion = true;
+                    System.out.println("Pylon built");
+                    interrupt = 0;
+                }}
+            if(x.getMinerals()>=150&&completion==true&&building==0){
+                mainbuild(UnitType.UnitTypes.Protoss_Gateway);
+                System.out.println("should build gateway");
+            }
+        }
+        if(x.getMinerals()>=150&&completion==true&&building==0&&check==0){
+            mainbuild(UnitType.UnitTypes.Protoss_Gateway);
+            System.out.println("WHY HERE build gateway");
+        }
+        if(x.getMinerals() >= 100 && !assimilated && check==1){
+            mainbuild(UnitType.UnitTypes.Protoss_Assimilator);
+            System.out.println("WHY HERE assimilator");
+        }
+        if(check ==1) {
+            if((gas = true && x.getMinerals()>150)||x.getMinerals()>400){
+                for(Unit unit:bwapi.getUnits(bwapi.getSelf())){
+                    if(unit.getType()==UnitType.UnitTypes.Protoss_Gateway){
+                        unit.train(UnitType.UnitTypes.Protoss_Zealot);
+                        break;
+                    }
+                }
+            }
+        }
     }
     public int mainbuild(UnitType x){
         int z=0;
