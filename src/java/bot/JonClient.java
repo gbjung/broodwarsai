@@ -39,6 +39,8 @@ public class JonClient implements BWAPIEventListener {
     LinkedList Zealots=new LinkedList();
     boolean completion=false;
     boolean cybercored=false;
+    boolean templararchives=false;
+    boolean stargate = false;
     int counter=0;
     int building=0;
     Unit worker;
@@ -87,16 +89,7 @@ public class JonClient implements BWAPIEventListener {
             earlygame(x);
         }
         if(cybercored){
-            System.out.println("You did it!");
-            for (Unit units:bwapi.getUnits(x)){
-                if(units.getType()==UnitType.UnitTypes.Protoss_Gateway){
-                    if(x.getGas()>=50 && x.getMinerals()>=200) {
-                        units.train(UnitType.UnitTypes.Protoss_Dragoon);
-                    }else if(x.getMinerals()>=400){
-                        units.train(UnitType.UnitTypes.Protoss_Zealot);
-                    }
-                }
-            }
+            midgame(x);
         }
 
 
@@ -152,6 +145,52 @@ public class JonClient implements BWAPIEventListener {
                 }
             }}
 
+    }
+
+    public void midgame(Player x){
+        for (Unit building : bwapi.getUnits(x)) {
+            if (building.getType() == UnitType.UnitTypes.Protoss_Templar_Archives && !templararchives) {
+                if (building.isBeingConstructed()) {
+                    System.out.println("Templar Archives check");
+                    templararchives = true;
+                }
+
+            }
+            if (building.getType() == UnitType.UnitTypes.Protoss_Stargate && templararchives && !stargate) {
+                if (building.isBeingConstructed()) {
+                    System.out.println("Stargate check");
+                    stargate = true;
+                }
+
+            }
+        }
+        if(!templararchives&&x.getMinerals()>150&&x.getGas()>200) {
+            mainbuild(UnitType.UnitTypes.Protoss_Templar_Archives);
+        }
+        if(templararchives&&x.getMinerals()>150&&x.getGas()>150&&!stargate){
+            mainbuild(UnitType.UnitTypes.Protoss_Stargate);
+        }
+        for (Unit units:bwapi.getUnits(x)){
+            if(units.getType()==UnitType.UnitTypes.Protoss_Stargate){
+                if(x.getGas()>=250&&x.getMinerals()>=250&&stargate){
+                    units.train(UnitType.UnitTypes.Protoss_Stargate);
+                    break;
+                }
+            }
+            if(units.getType()==UnitType.UnitTypes.Protoss_Gateway){
+                if(templararchives&&x.getGas()>=100&&x.getMinerals()>=125){
+                    units.train(UnitType.UnitTypes.Protoss_Dark_Templar);
+                    break;
+                }
+                else if(x.getGas()>=50 && x.getMinerals()>=200) {
+                    units.train(UnitType.UnitTypes.Protoss_Dragoon);
+                    break;
+                }else if(x.getMinerals()>=400){
+                    units.train(UnitType.UnitTypes.Protoss_Zealot);
+                    break;
+                }
+            }
+        }
     }
 
     public void earlygame(Player x){
