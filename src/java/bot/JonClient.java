@@ -41,8 +41,10 @@ public class JonClient implements BWAPIEventListener {
     boolean cybercored=false;
     boolean templararchives=false;
     boolean stargate = false;
+    boolean fleetbacon = false;
     int counter=0;
     int building=0;
+    int dragoon=0;
     Unit worker;
     int location;
     int override=0;
@@ -93,9 +95,8 @@ public class JonClient implements BWAPIEventListener {
         }
 
 
-        if(x.getSupplyUsed()+2>=x.getSupplyTotal()){
+        if(x.getSupplyUsed()+3>=x.getSupplyTotal()){
             int count=0;
-            System.out.println("need to supply");
             for (Unit units:bwapi.getUnits(x)){
                 if(units.getType()==UnitType.UnitTypes.Protoss_Pylon && units.isCompleted()==true){
                     count+=1;
@@ -107,27 +108,26 @@ public class JonClient implements BWAPIEventListener {
 
             }
         }
-        if(x.getSupplyUsed()+2>=x.getSupplyTotal()&&o==0&&x.getMinerals()>150){
+        if(x.getSupplyUsed()+3>=x.getSupplyTotal()&&o==0&&x.getMinerals()>150){
 
             supply();
-            System.out.println("Supply called");
             o=1;;
         }
 
         for (Unit assim:bwapi.getUnits(x)){
-        if (gas) {
+            if (gas) {
                 if (assim.getType().isRefinery()&&gasProbes<3) {
                     if(assim.isCompleted()){
-;                    for (Unit myUnit:bwapi.getUnits(x)){
-                        if((myUnit.getType().isWorker()||myUnit.isGatheringMinerals())&&gasProbes<3){
-                            myUnit.gather(assim, false);
-                            gasProbes++;
-                    }
+                        ;                    for (Unit myUnit:bwapi.getUnits(x)){
+                            if((myUnit.getType().isWorker()||myUnit.isGatheringMinerals())&&gasProbes<3){
+                                myUnit.gather(assim, false);
+                                gasProbes++;
+                            }
 
-                    }
+                        }
 
+                    }}
             }}
-        }}
         for (Unit myUnit : bwapi.getUnits(x)) {
             if (myUnit.getType() == UnitType.UnitTypes.Protoss_Probe) {
                 if (myUnit.isIdle()&&!myUnit.isGatheringGas()&&!myUnit.isCarryingGas()){
@@ -156,42 +156,54 @@ public class JonClient implements BWAPIEventListener {
                 }
 
             }
-            if (building.getType() == UnitType.UnitTypes.Protoss_Stargate && templararchives && !stargate) {
+            if (building.getType() == UnitType.UnitTypes.Protoss_Stargate && !stargate) {
                 if (building.isBeingConstructed()) {
                     System.out.println("Stargate check");
                     stargate = true;
+                    break;
+                }
+
+            }
+            if (building.getType() == UnitType.UnitTypes.Protoss_Fleet_Beacon && !fleetbacon) {
+                if (building.isBeingConstructed()) {
+                    System.out.println("fleetbacon check");
+                    fleetbacon = true;
+                    break;
                 }
 
             }
         }
-        if(!templararchives&&x.getMinerals()>150&&x.getGas()>200) {
-            mainbuild(UnitType.UnitTypes.Protoss_Templar_Archives);
-        }
-        if(templararchives&&x.getMinerals()>150&&x.getGas()>150&&!stargate){
+        //if(x.getMinerals()>=150&&x.getGas()>=200) {
+        //mainbuild(UnitType.UnitTypes.Protoss_Templar_Archives);
+       //}
+        if(!stargate&&x.getMinerals()>=150&&x.getGas()>=150&&dragoon>3){
             mainbuild(UnitType.UnitTypes.Protoss_Stargate);
         }
+        if(stargate&&!fleetbacon&&x.getMinerals()>=600&&x.getGas()>=300){
+            mainbuild(UnitType.UnitTypes.Protoss_Fleet_Beacon);
+        }
         for (Unit units:bwapi.getUnits(x)){
-            if(units.getType()==UnitType.UnitTypes.Protoss_Stargate){
-                if(x.getGas()>=250&&x.getMinerals()>=250&&stargate){
-                    units.train(UnitType.UnitTypes.Protoss_Stargate);
-                    break;
+                if(units.getType()==UnitType.UnitTypes.Protoss_Stargate){
+                        units.train(UnitType.UnitTypes.Protoss_Corsair);
+                        System.out.println("CARRIER!");
+                        break;
                 }
-            }
-            if(units.getType()==UnitType.UnitTypes.Protoss_Gateway){
-                if(templararchives&&x.getGas()>=100&&x.getMinerals()>=125){
-                    units.train(UnitType.UnitTypes.Protoss_Dark_Templar);
-                    break;
-                }
-                else if(x.getGas()>=50 && x.getMinerals()>=200) {
+
+
+            if(units.getType()==UnitType.UnitTypes.Protoss_Gateway) {
+                 if (x.getGas() >= 50 && x.getMinerals() >= 200) {
                     units.train(UnitType.UnitTypes.Protoss_Dragoon);
+                     dragoon++;
                     break;
-                }else if(x.getMinerals()>=400){
+                } else if (x.getMinerals() >= 450) {
                     units.train(UnitType.UnitTypes.Protoss_Zealot);
                     break;
                 }
             }
+            }
         }
-    }
+
+
 
     public void earlygame(Player x){
         if(assimilated&&x.getMinerals()>=200&&!cybercored){
